@@ -1,0 +1,74 @@
+#Создать представление
+
+# с информацией ФИО, курс, форма обучения всех студентов ФПК
+create view fpk as
+select stud.last_name, stud.f_name, stud.s_name, hours.course, form.form_name, process.hours_id
+from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on stud.id = process.stud_id
+where faculty.faculty_name = 'ФПК';
+select * from fpk;
+
+
+# с информацией Факультет, курс, количество общих , в которое войдут курсы заочной формы обоих факультетов,
+# но только те по которым число общих часов обучения максимально
+create view max_hours as
+select faculty.faculty_name, hours.course, hours.all_h
+from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join (select faculty.faculty_name, max(hours.all_h) as maxAllHours from hours
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where form.form_name = 'заочно'
+group by faculty.faculty_name) as tabl
+on faculty.faculty_name = tabl.faculty_name
+and hours.all_h = tabl.maxAllHours;
+select * from max_hours;
+
+# с информацией об отличниках на каждом курсе, каждого факультета , каждой формы обучения и их среднем бале
+create view bestStud as
+select stud.id, stud.last_name, hours.course, faculty.faculty_name, form.form_name, stud.exm
+from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on stud.id = process.stud_id
+join (select hours.course, faculty.faculty_name, form.form_name, max(stud.exm) as max_exm
+from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on stud.id = process.stud_id
+group by hours.course, faculty.faculty_name, form.form_name) as tabl
+on hours.course = tabl.course
+and faculty.faculty_name = tabl.faculty_name
+and form.form_name = tabl.form_name
+and stud.exm = tabl.max_exm;
+select * from bestStud;
+
+# с информацией о слабоуспевающих студентах и их среднем бале
+create view unsuccessfulStud as
+select * from stud
+where exm < (select avg(exm) from stud)
+order by stud.exm;
+select * from unsuccessfulStud;
+
+#На основании первого представления переведите студента Слободницкий на факультет ФПМ, 
+#сделайте повторно  выборку  первого представления
+# Изначально я добавлю строку в hours с существованием 3-й формы обучения,
+# на которой Слободницкий учится на факультете ФПК (чтобы не было ошибки при его переводе=))
+insert into hours (course,faculty_id,form_id,all_h,inclass_h) values
+(2, 1, 3, 450, 370);
+
+#дальше я обновляю представление, то есть перевожу Слободницкого на ФПМ=)
+update fpk
+
+set hours_id = 13
+
+where last_name = 'Слободницкий';
+
+#проверяю, что Слободницкий переведен)
+select * from fpk;
