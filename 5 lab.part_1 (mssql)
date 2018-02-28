@@ -1,0 +1,103 @@
+--1.Вывести список всех факультетов с информацией о том на каком из них доступна заочная форма обучения.
+select distinct faculty.faculty_name, tab.form_name from faculty
+left join (select faculty.faculty_name, form.form_name from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where form.form_name = 'заочно'
+group by faculty.faculty_name,
+form.form_name) as tab1
+on faculty.faculty_name = tab.faculty_name;
+
+--2.Вывести список всех студентов с информацией о том, кто их них учится на последнем курсе своего факультета и формы обучения
+
+select stud.*, faculty.faculty_name, form.form_name, tab.maxCourse from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on stud.id = process.stud_id
+left join (select faculty.faculty_name, form.form_name, max(hours.course) as maxCourse from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+group by faculty.faculty_name, form.form_name) as tab
+on faculty.faculty_name = tab.faculty_name and form.form_name = tab.form_name
+and hours.course = tab.maxCourse;
+
+--3.Вывести список всех студентов, при этом для студентов иностранцев вывести название факультета и форму обучения
+select stud.*, tab.faculty_name, tab.form_name from stud
+left join(select stud.*, faculty.faculty_name, form.form_name from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on stud.id = process.stud_id
+where stud.s_name is null) as tab on stud.id = tab.id;
+
+--4.Вывести список факультетов, для каждого факультета вывести список форм обучения и номера курсов,
+-- для первых курсов вывести количество общих часов
+
+select faculty.faculty_name, form.form_name, hours.course, tab.all_h from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+left join (select faculty.faculty_name, form.form_name, hours.course, hours.all_h from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where hours.course = 1) as tab
+on faculty.faculty_name = tab.faculty_name and form.form_name = tab.form_name
+and hours.course = tab.course;
+
+--5.Вывести список иностранцев, с указанием общего числа студентов обучающихся с ними на потоке (один факультет, курс, форма)
+select stud.id, stud.last_name, stud.f_name, stud.s_name, faculty.faculty_name, hours.course,
+form.form_name, tab.kol from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on process.stud_id = stud.id
+left join (select faculty.faculty_name, hours.course, form.form_name, count(stud.id) as kol
+from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on process.stud_id = stud.id
+group by faculty.faculty_name, hours.course, form.form_name) as tab
+on faculty.faculty_name = tab.faculty_name
+and hours.course = tab.course
+and form.form_name = tab.form_name
+where stud.s_name is null;
+
+--6.Вывести список форм обучения института, для очной и заочной посчитать количество студентов
+select form.form_name, tab.kol from form
+left join (select form.form_name, count(*) as kol from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on process.stud_id = stud.id
+where form.form_name in ('очно', 'заочно')
+group by form.form_name) as tab
+on form.form_name = tab.form_name;
+
+--7.Вывести список факультетов, с указанием числа студентов обучающихся на каждой форме обучения
+select faculty.faculty_name, tab1.ochno, tab2.zaochno, tab3.vechernee
+from faculty
+left join (select faculty.faculty_name, count(*) as ochno from faculty
+join hours on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+join process on process.hours_id = hours.id
+join stud on stud.id = process.stud_id
+where form.form_name = 'очно'
+group by faculty.faculty_name, form.form_name) as tab1
+on faculty.faculty_name = tab1.faculty_name
+    left join (select faculty.faculty_name, count(*) as zaochno from faculty
+    join hours on hours.faculty_id = faculty.id
+    join form on hours.form_id = form.id
+    join process on process.hours_id = hours.id
+    join stud on stud.id = process.stud_id
+    where form.form_name = 'заочно'
+    group by faculty.faculty_name, form.form_name) as tab2
+    on faculty.faculty_name = tab2.faculty_name
+      left join (select faculty.faculty_name, count(*) as vechernee from faculty
+      join hours on hours.faculty_id = faculty.id
+      join form on hours.form_id = form.id
+      join process on process.hours_id = hours.id
+      join stud on stud.id = process.stud_id
+      where form.form_name = 'вечернее'
+      group by faculty.faculty_name, form.form_name) as tab3
+      on faculty.faculty_name = tab3.faculty_name;
