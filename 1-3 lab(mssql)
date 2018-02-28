@@ -1,0 +1,355 @@
+--Создайте следующие таблицы
+--таблица STUDENTS  содержащая поля
+- идентификатор студента
+- имя
+-фамилию
+-отчество
+-идентификатор группы
+поле идентификатора студента должно быть первичным ключом в таблице
+
+create table students
+(studentID int not null identity,
+studentName varchar(30) not null,
+studentSurname varchar(30) not null,
+studentSecondName varchar(30),
+groupID int,
+constraint pk_students primary key (studentID)
+);
+--Таблица TEACHERS содержащая поля
+- идентификатор преподавателя
+- имя
+-фамилию
+-отчество
+поле идентификатора преподавателя должно быть первичным ключом в таблице
+
+create table teachers
+(teacherID int not null identity,
+teacherName varchar(30) not null,
+teacherSurname varchar(30) not null,
+teacherSecondName varchar(30),
+constraint pk_teachers primary key (teacherID)
+);
+--Таблица GROUPS содержащая поля
+- идентификатор группы
+- наименование
+- курс
+поле идентификатора группы должно быть первичным ключом в таблице
+
+create table groups
+(groupID int not null identity,
+groupName varchar(30) not null,
+groupCourse int not null,
+constraint pk_groups primary key (groupID)
+);
+--Таблица PLAN содержащая поля
+- идентификатор группы
+- идентификатор преподавателя
+- идентификатор предмета
+Все поля образуют первичный ключ
+
+create table tplan
+(groupID int,
+teacherID int,
+subjectID int,
+constraint pk_tplan primary key (groupID, teacherID, subjectID)
+);
+
+--Таблица SUBJECTS содержащая поля
+- идентификатор предмета
+- наименование предмета
+- количество часов по предмету
+
+create table subjects
+(subjectID int not null identity,
+subjectName varchar(30) not null,
+subjectHourse int not null,
+constraint pk_subjects primary key (subjectID)
+);
+--Измените таблицы, создав связи между ними
+-- STUDENTS. идентификатор группы - GROUPS.идентификатор группы
+alter table students
+add 
+constraint fk_groups foreign key (groupID)
+references groups (groupID);
+
+-- PLAN.идентификатор преподавателя - TEACHERS.идентификатор преподавателя
+alter table tplan
+add
+constraint fk_tplan_teachers foreign key (teacherID)
+references teachers (teacherID);
+
+-- PLAN.идентификатор предмета - SUBJECTS.идентификатор предмета
+alter table tplan
+add
+constraint fk_tplan_subjects foreign key (subjectID)
+references subjects (subjectID);
+
+-- PLAN.идентификатор группы - GROUPS.идентификатор группы
+alter table tplan
+add
+constraint fk_tplan_groups foreign key (groupID)
+references groups (groupID);
+
+--Заполнить таблицы согласно данным Таблицы 1.1 и Таблицы 1.2
+--Таблица 1.1
+
+insert into groups (groupName, groupCourse)
+values ('PO134', 1),
+('PO135', 1),
+('PO235', 2),
+('PO335', 3);
+
+insert into students (studentName, studentSurname, studentSecondName, groupID)
+values ('P.', 'Fedorenko', 'R.', 1),
+('O.', 'Zingel', '', 1),
+('P.', 'Miheenok', 'G.', 1),
+('N.', 'Savickaja', '', 2),
+('M.', 'Kovalchuk', 'E.', 2),
+('N.', 'Zabolotnaja', 'G.', 3),
+('T.', 'Kovrigo', 'R.', 3);
+
+insert into teachers (teacherName, teacherSurname, teacherSecondName)
+values ('N.', 'Safronenko', ''),
+('N.', 'Zaitseva', 'U.'),
+('P.', 'Lisopad', 'G.'),
+('K.', 'Kluev', 'N.'),
+('P.', 'Rogachevskij', 'N.'),
+('N.', 'Makarov', 'G.');
+
+insert into subjects (subjectName, subjectHourse)
+values ('Physics', 200),
+('Mathematics', 120),
+('Algorithmization', 70),
+('Designing a Database', 130),
+('Visual programming tools', 90),
+('Object-oriented programming', 70);
+
+insert into tplan (groupID, teacherID, subjectID)
+values (1, 1, 4),
+(1, 2, 5),
+(2, 3, 6),
+(2, 4, 7),
+(3, 5, 8),
+(3, 6, 9);
+
+-- В таблице STUDENTS внесите изменения таким образом, чтобы все студенты учащиеся в группе ПО135 числились в группе 134.
+update students set groupID = 1 where groupID = 2;
+
+-- Из таблицы групп удалите запись о группе по 135
+delete from groups where groupName = 'PO135';
+
+-- в таблице SUBJECTS увеличьте количество часов на 30 для предметов Средства визуального программирования, Объектно-ориентированное программирование
+update subjects set subjectHourse = (subjectHourse + 30)
+where (subjectName = 'Visual programming tools' 
+or subjectName = 'Object-oriented programming');
+
+-- в таблицу SUBJECTS добавьте столбец, в который будут внесены данные для формы контроля по предметам (по всем предметам сдаются экзамены, кроме " Основы алгоритмизации " -зачет). обновите таблицу SUBJECTS с учетом форм контроля по предметам.
+
+alter table subjects add formControl varchar(30);
+update subjects 
+set formControl = 'credit test' 
+where subjectName <> 'Algorithmization';
+
+update subjects
+set formControl = 'exam'
+where subjectName = 'Algorithmization'; 
+
+-- Из таблиц STUDENTS и TEACHERS удалите столбцы с данными отчества
+
+alter table students drop column studentSecondName;
+alter table teachers drop column teacherSecondName;
+
+
+
+--№2
+
+---1.	Вывести фамилии студентов, в которых присутствуют буквы "б" и/или "о" в любых комбинациях и порядке
+select * from stud 
+where last_name like N'%о%' 
+or last_name like N'%б%'
+or last_name like N'%о%' and last_name like N'%б%';
+
+---2.	Вывести сведения о  студентах, фамилии которых начинаются с буквы К  
+select * from stud 
+where last_name like N'К%';
+
+---3.	Вывести сведения о  студентах, фамилии которых содержат 8 символов и более 
+select * from stud
+where last_name like N'________%'
+---или так
+select * from stud
+where len(last_name)>=8;
+
+---4.	Вывести сведения о  студентах, фамилии которых содержат или больше, или меньше семи символов
+select * from stud
+where last_name not like N'_______';
+---или так
+select * from stud
+where len(last_name)<>7;
+
+---5.	Найти всех студентов учащихся на ФПМ очном 1, 2 и 3 курса, отсортировать результаты по полю отчества
+select * from stud
+where faculty = N'ФПМ'
+and form = N'очная'
+and year in (1,2,3)
+order by s_name;
+
+---6.	Найти всех студентов учащихся на ФПК очном, отсортировать результаты по полю отчества в убывающем порядке
+select * from stud
+where faculty = N'ФПК'
+and form = N'заочная'
+order by s_name desc;
+
+---7.	Определить средний балл на заочной форме обучения каждого факультета
+select faculty, form, avg(exm)
+from stud
+group by faculty, form
+having form = N'заочная';
+
+--8.	Найти значения максимальных средних баллов для каждого факультета и курса
+select faculty, year, max(exm) as maxAvg
+from stud
+group by faculty, year
+
+--9.	Определить список факультетов, средний балл успеваемости на которых больше 7.5
+select faculty, avg(exm) as average
+from stud
+group by faculty
+having avg(exm) > 7.5;
+
+--10.	Определить список курсов с указанием факультета, средний балл успеваемости на которых больше 7.5
+select faculty, year, avg(exm) as average
+from stud
+group by faculty, year
+having avg(exm) > 7.5;
+
+--11.  Определить форму обучения с привязкой к факультету, для которой минимальный балл успеваемости для одного из студентов меньше 7.  
+select form, faculty, min(exm) as minBall
+from stud
+group by form, faculty
+having min(exm) < 7;
+
+--12.  Определить, какое количество часов студенты ФПК 3-го курса заочной формы обучения тратят на самостоятельную подготовку
+select distinct faculty, form, year, (all_h - inclass_h) as home_hourse
+from stud
+where faculty=N'ФПК' and form=N'заочная';
+
+--13.  Вывести список факультетов, курсов, форм обучения на которых студенты тратят более 150 часов на самостоятельную подготовку
+select distinct faculty, year, form, (all_h - inclass_h) as home_hourse
+from stud
+where (all_h - inclass_h) > 150;
+
+--14.  определить среднее число часов, которое тратит студент факультета для каждой формы обучения за один год  на этой форме.
+select faculty, form, year, avg(all_h) as average_hourse
+from stud
+group by faculty, form, year;
+
+--№3
+
+-- 1.	Вывести информацию о студентах, которым на конец текущего года не исполнится 31 года
+select *, (year(getdate())-year(br_date)) as age 
+from stud
+where year(getdate())-year(br_date) < 31;
+
+--2.	Вывести средний возраст студентов по факультету, курсу и форме обучения
+select faculty, year, form, avg(year(getdate())-year(br_date)) as avg_age
+from stud
+group by faculty, year, form
+order by faculty, year;
+
+--3.	Вывести информацию о студентах, которым на текущий момент исполнился 31 год
+select * 
+from stud
+where datediff(year, br_date, cast(getdate() as date)) > 31
+order by br_date;
+
+--4.	Найти количество  студентов от 32 до 45 лет
+select count (*) as kol
+from stud
+where year(getdate())-year(br_date) between 32 and 45;
+
+--5.	Определить сколько студентов старше 45 лет учатся на каждом факультете на каждом курсе
+select faculty, year, count(*) as kol
+from stud
+where year(getdate())-year(br_date) > 45
+group by faculty, year;
+
+--6.	Определит факультет,  на котором учится максимальное количество студентов до 35
+select top 1 faculty, count(*) as kol
+from stud
+where year(getdate())-year(br_date) < 35
+group by faculty
+order by kol desc;
+
+--7.	Определить факультет с минимальным числом студентов на заочной форме обучения
+select top 1 faculty, count(*) as kol
+from stud
+where form=N'заочная'
+group by faculty, form
+order by kol asc;
+
+--8.	Определить факультет, на котором учится максимальное число первокурсников очников или заочников 
+select top 1 faculty, count(*) as kol
+from stud
+where year=1
+and form in (N'очная', N'заочная')
+group by faculty, form
+order by kol desc;
+
+--9.	Определить факультет и курс, на которых средний возраст студентов меньше 32 лет
+select faculty, year, avg(year(getdate())-year(br_date)) as avg_age
+from stud
+group by faculty, year
+having avg(year(getdate())-year(br_date))<32
+order by avg_age;
+
+--10.	Вывести список форм обучения в университете 
+select distinct form
+from stud;
+
+--11.	Определить число форм обучения в университете на текущий момент
+select form
+from stud
+where datediff(year, in_date, cast(getdate() as date))<5
+group by form;
+
+--12.	Определить число форм обучения на каждом факультете
+select faculty, count(*) as kol
+from
+(select faculty, form
+from stud
+group by faculty, form) as tab1
+group by faculty;
+
+--13.	Определить общее количество иностранцев и студентов не иностранцев фамилии которых начинаются на букву С
+select count(*) as kol
+from stud
+where (last_name like N'С%')
+or (last_name like N'С%' and s_name is null);
+
+--15.	Определить факультет и курс и общую численность курса на котором учится студенты не младше 25 (подзапрос)
+select tab1.faculty, tab1.year, tab1.kol
+from
+(select faculty, year, count(*) as kol
+from stud
+group by faculty, year) as tab1,
+(select faculty, year, count(*) as kol
+from stud
+where year(getdate())-year(br_date) > 25
+group by faculty, year) as tab2
+where
+tab1.faculty=tab2.faculty
+and tab1.year=tab2.year
+and tab1.kol=tab2.kol;
+
+--16.	Найти факультет и курс, на которых студентов без отчества обучается больше одного (подзапрос)
+select tab1.faculty, tab1.year from
+(select faculty, year, count(*) as kol
+from stud
+where s_name is null
+group by faculty, year) as tab1
+where tab1.kol > 1;
+
+--17.	Вывести информацию о самом успевающем студенте университета(подзапрос)
+select top 1 * from stud
+order by exm desc;
