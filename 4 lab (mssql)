@@ -1,0 +1,140 @@
+1.	Вывести информацию о первых трех студентах (факультет, курс) заочной формы обучения младше 30 лет
+
+select top 3 stud.*, faculty.faculty_name, hours.course from stud 
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where form.form_name = 'заочно' and DATEDIFF ( YEAR , stud.br_date, SYSDATETIME()) < 30
+order by stud.id;
+
+2.	Вывести информацию о первых пяти студентах (факультет, курс) заочной формы обучения старше 25 лет
+
+select top 5 stud.*, faculty.faculty_name, hours.course from stud 
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where form.form_name = 'заочно' and DATEDIFF ( YEAR , stud.br_date, SYSDATETIME()) > 25
+order by stud.id;
+
+3.	Определить количество студентов на каждом факультете
+
+select count(*) as kol_stud, faculty.faculty_name from faculty
+join hours on hours.faculty_id=faculty.id
+join process on process.hours_id=hours.id
+join stud on stud.id=process.stud_id
+group by faculty.faculty_name;
+
+4.	Определить количество студентов, учащихся на каждой форме обучения
+
+select count(*) as kol_stud, form.form_name from form
+join hours on hours.form_id=form.id
+join process on process.hours_id=hours.id
+join stud on stud.id=process.stud_id
+group by form.form_name;
+
+5.	Определить средний возраст студентов для каждого факультета на конец года (лет)
+
+select avg(DATEDIFF ( YEAR , stud.br_date, '2018-12-31')) as avg_ageStud, faculty.faculty_name  from stud
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+group by faculty.faculty_name;
+
+
+6.	Найти всех студентов-иностранцев (без отчества), вывести сведения о них (дата поступления, факультет, курс, форма обучения)
+
+select  stud.id, stud.last_name, stud.f_name, stud.in_date, faculty.faculty_name, hours.course, form.form_name from stud 
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where stud.s_name is null
+order by stud.id;
+
+7.	Определить общее количество аудиторных часов за весь период обучения для студентов очников ФПМ
+
+select sum(hours.inclass_h) as sum_hours from hours 
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where form.form_name = 'очно' and faculty.faculty_name ='ФПМ'
+group by faculty.faculty_name,
+form.form_name;
+
+8.	Определить общее количество часов согласно плану для студентов заочной формы обучения ФПК заочной формы обучения
+
+select sum(hours.all_h) as sum_hours from hours 
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where form.form_name = 'заочно' and faculty.faculty_name ='ФПК'
+group by faculty.faculty_name,
+form.form_name;
+
+9.	Определить всех сокурсников (с учетом факультета, но разных форм обучения) студента Ботяновского 
+
+select stud.*, faculty.faculty_name, form.form_name from faculty
+ join hours on hours.faculty_id=faculty.id
+ join form on hours.form_id=form.id
+ join process on process.hours_id=hours.id
+ join stud on stud.id=process.stud_id
+ join (select faculty.faculty_name, hours.course from faculty
+ join hours on hours.faculty_id=faculty.id
+ join process	on process.hours_id=hours.id
+ join stud on stud.id=process.stud_id
+ where stud.last_name='Ботяновский') as tabl1 on hours.course=tabl1.course and faculty.faculty_name=tab1.faculty_name;
+
+10.	Определить на какой факультет поступило наибольшее количество человек в 2015 году
+
+select top 1 faculty.faculty_name, count (process.stud_id) as kol_stud2015 from stud
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+where stud.in_date like '2015%'
+group by faculty.faculty_name
+
+11.	Вывести список студентов, которые учатся на тех же  курсах, что и студент Зингель и студентка Зайцева
+
+select stud.*, faculty.faculty_name, form.form_name, hours.course from faculty
+join hours on hours.faculty_id=faculty.id
+join form on hours.form_id=form.id
+join process on process.hours_id=hours.id
+join stud on stud.id=process.stud_id
+where hours.course in (select hours.course from faculty
+ join hours on hours.faculty_id=faculty.id
+ join process on process.hours_id=hours.id
+ join stud on stud.id=process.stud_id
+ where stud.last_name=N'Зингель' or stud.last_name=N'Зайцева');
+
+
+12.	Вывести список студентов по факультетам, средний балл которых меньше  7
+
+select  faculty.faculty_name, stud. from stud 
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where stud.exm < 7
+order by faculty.faculty_name, stud.exm desc;
+
+13.	Вывести список студентов, средний балл которых меньше чем средний по институту
+
+select stud.*, faculty.faculty_name from faculty
+join hours on hours.faculty_id=faculty.id
+join process on process.hours_id=hours.id
+join stud on stud.id=process.stud_id
+where stud.exm < (select avg(exm) from stud)
+order by faculty.faculty_name;
+
+--14.	Вывести список студентов, средний бал которых выше чем по их факультету
+
+select stud.*, faculty.faculty_name from faculty
+join hours on hours.faculty_id=faculty.id
+join process on process.hours_id=hours.id
+join stud on stud.id=process.stud_id
+join (select faculty.faculty_name, round(avg(exm),2) as avg_exm from faculty
+join hours on hours.faculty_id=faculty.id
+join process on process.hours_id=hours.id
+join stud on stud.id=process.stud_id
+group by faculty.faculty_name) as tab
+on faculty.faculty_name=tab.faculty_name and stud.exm>tab.avg_exm;
