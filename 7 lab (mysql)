@@ -1,0 +1,58 @@
+/*1) Создать хранимую процедуру для подсчета количествa студентов на факультете
+ и форме обучения (входные данные название факультета и наименование формы обучения) */
+delimiter //
+create procedure kol_stud (in fac_name nvarchar(3), in form_n nvarchar(20))
+begin
+set @kolStud = 0;
+select count(*) into @kolStud from stud
+join process on stud.id = process.stud_id
+join hours on process.hours_id = hours.id
+join faculty on hours.faculty_id = faculty.id
+join form on hours.form_id = form.id
+where faculty.faculty_name = fac_name and form.form_name = form_n;
+end //
+delimiter ;
+
+call kol_stud('ФПМ', 'очно');
+
+select @kolStud;
+
+
+
+/*2)Создать хранимую процедуру: добавления студента на указанный факультет 
+и форму обучения (входные данные: название факультета и наименование формы 
+обучения, дата рождения, дата поступления, ФИО).*/
+
+delimiter //
+create procedure add_stud (in fac_name nvarchar(3), in form_n nvarchar(20), 
+in brth_d date, in date_in date, in fam_name nvarchar(20), in im_name nvarchar(20), 
+in ot_name nvarchar(20))
+begin
+declare h_id, st_id int;
+select hours.id into h_id from hours
+join faculty on faculty.id=hours.faculty_id
+join form on form.id=hours.form_id
+where form.form_name=form_n and faculty.faculty_name=fac_name and hours.course = 1;
+if not exists (select stud.id from stud
+where stud.last_name = fam_name
+and stud.f_name = im_name
+and stud.s_name = ot_name
+and stud.br_date = brth_d
+and stud.in_date = date_in) then
+insert into stud (last_name,f_name,s_name,br_date,in_date)
+values (fam_name, im_name, ot_name, brth_d, date_in);
+
+select stud.id into st_id from stud
+where stud.last_name = fam_name;
+
+insert into process(stud_id, hours_id)
+values (st_id , h_id);
+else
+select 'Такой студент существует в базе!';
+end if;
+end //
+delimiter ;
+
+call add_stud('ФПМ', 'очно', '1992-11-28', '2017-06-12', 'Найдович', 'Кристина', 'Ивановна');
+
+select * from stud;
