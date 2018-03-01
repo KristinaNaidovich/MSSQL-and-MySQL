@@ -11,7 +11,6 @@ join stud on stud.id = process.stud_id
 where faculty.faculty_name = 'ФПК';
 select * from fpk;
 
-
 # с информацией Факультет, курс, количество общих , в которое войдут курсы заочной формы обоих факультетов,
 # но только те по которым число общих часов обучения максимально
 create view max_hours as
